@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 import { createTestPool } from "./helpers/db-pool";
-import { createTestTenant } from "./helpers/test-tenant";
+import { createTestAuthUser, createTestTenant } from "./helpers/test-tenant";
 import { sql } from "drizzle-orm";
 import { withTenant } from "../lib/db/tenant";
 import { classes } from "../lib/db/schema";
@@ -27,6 +27,7 @@ describe("Phase 5 attendance", () => {
     const t = await createTestTenant(pool);
     tenantId = t.tenantId;
     ownerUser = t.ownerUserId;
+    await createTestAuthUser(pool, teacherUser);
 
     await withTenant({ tenantId, userId: ownerUser }, async (tx) => {
       await tx.execute(sql`

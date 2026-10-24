@@ -25,12 +25,12 @@ Deployed at `akura.elgiriya.com`; tenant workspaces at `akura.elgiriya.com/i/{sl
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js (App Router), TypeScript, Server Components + Server Actions |
-| Database | **Supabase Postgres** (RLS + `withTenant()` / `akura_app`) |
-| Auth | **Supabase Auth** (`@supabase/ssr`) — identity in Supabase Auth; app links via `auth_user_id` |
+| Database | **Neon Postgres** (RLS + `withTenant()` / `akura_app`; pooled endpoint for the app, direct for migrations) |
+| Auth | **Better Auth** (self-hosted) — identities in Neon `auth_*` tables; app links via `auth_user_id` (FK, never cascades) |
 | ORM | Drizzle |
-| DB driver | `pg` (node-postgres) with SSL — transactions for `SET LOCAL` under poolers |
+| DB driver | `pg` (node-postgres) with verified SSL — transactions for `SET LOCAL` under Neon's PgBouncer pooler |
 | Styling | Tailwind CSS |
-| File storage | **Supabase Storage** (private bucket; signed URLs after app authz) |
+| File storage | **Supabase Storage only** (private bucket; service-role key server-side; signed URLs after app authz) |
 | Email | Resend + React Email |
 | Payments | **PayHere only** — Recurring API + `notify_url` webhook. No Stripe. |
 | PDF | React-PDF or Puppeteer, server-side |
@@ -59,7 +59,7 @@ The application DB role must **not** have `BYPASSRLS`. Migrations run as a separ
 
 ### 4.2 `withTenant` — the only way to touch tenant data
 
-Supabase (and other) poolers often run in transaction mode. A bare `SET` leaks session state. `SET LOCAL` / `set_config(..., true)` must sit inside an explicit transaction with the query.
+Neon's pooled endpoint (PgBouncer) runs in transaction mode. A bare `SET` leaks session state. `SET LOCAL` / `set_config(..., true)` must sit inside an explicit transaction with the query.
 
 ```ts
 export async function withTenant<T>(
@@ -129,8 +129,8 @@ See product brief sections for data model, student self-registration, attendance
 | Phase | Scope |
 | --- | --- |
 | **0. Audit** | Done — `docs/AUDIT.md` |
-| **1. Foundation** | Supabase Postgres + Drizzle + `pg`, `tenants`, `memberships`, `audit_log`, `events`, RLS, `withTenant()`, tenant middleware, `__Host-` cookies, cross-tenant CI tests |
-| **2. Auth & roles** | Supabase Auth, signup creating tenant + owner, invitations, 3 roles + Owner flag, `requireRole()`, onboarding, ownership transfer |
+| **1. Foundation** | Neon Postgres + Drizzle + `pg`, `tenants`, `memberships`, `audit_log`, `events`, RLS, `withTenant()`, tenant middleware, `__Host-` cookies, cross-tenant CI tests |
+| **2. Auth & roles** | Better Auth on Neon, signup creating tenant + owner, invitations, 3 roles + Owner flag, `requireRole()`, onboarding, ownership transfer |
 | **3. Settings & billing skeleton** | setting_definitions, settings.get(), plans, subscriptions, trial, assertQuota/assertWritable |
 | **4. People & registration** | Students, guardians, classes, registration links + QR + OG, approval queue |
 | **5. Attendance** | Session model, 3-tap marking, offline draft, lock, reports |

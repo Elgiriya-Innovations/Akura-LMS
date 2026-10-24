@@ -43,6 +43,23 @@ export const TENANT_TABLES = [
 ] as const;
 
 /**
+ * Insert an identity row so memberships.auth_user_id satisfies its FK to
+ * auth_users (0012_better_auth.sql). Returns the id for chaining.
+ */
+export async function createTestAuthUser(
+  pool: Pool,
+  id: string = `user-${randomUUID()}`,
+): Promise<string> {
+  await pool.query(
+    `INSERT INTO auth_users (id, name, email, email_verified)
+     VALUES ($1, 'Test User', $2, true)
+     ON CONFLICT (id) DO NOTHING`,
+    [id, `${id}@test.akura.invalid`],
+  );
+  return id;
+}
+
+/**
  * Create a fresh test tenant with an owner membership.
  * Call inside before() — top-level await fails under tsx CJS.
  * @param pool — a raw pg Pool (pass createTestPool())
@@ -53,7 +70,7 @@ export async function createTestTenant(pool: Pool): Promise<{
   slug: string;
 }> {
   const slug = `test-${randomUUID().slice(0, 8)}`;
-  const ownerUserId = `owner-${randomUUID()}`;
+  const ownerUserId = await createTestAuthUser(pool, `owner-${randomUUID()}`);
   const r = await pool.query<{ app_create_tenant_with_owner: string }>(
     `SELECT app_create_tenant_with_owner($1, $2, $3, 'Asia/Colombo') AS app_create_tenant_with_owner`,
     [slug, "Test Institute", ownerUserId],

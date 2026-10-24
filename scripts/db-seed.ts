@@ -3,7 +3,8 @@
  *
  * Creates (or reuses) tenant slug `demo-institute` with a sample class,
  * students, and guardians. Owner auth id is synthetic (`seed-owner-demo`) —
- * use real Supabase signup for interactive login.
+ * it has an auth_users row but no password, so sign up normally for
+ * interactive login.
  *
  * Usage: npm run db:seed
  */
@@ -42,6 +43,13 @@ async function main() {
 
     let tenantId = existing.rows[0]?.id;
     if (!tenantId) {
+      // memberships.auth_user_id references auth_users (0012_better_auth.sql)
+      await pool.query(
+        `INSERT INTO auth_users (id, name, email, email_verified)
+         VALUES ($1, 'Demo Owner', $2, true)
+         ON CONFLICT (id) DO NOTHING`,
+        [OWNER, `${OWNER}@seed.akura.invalid`],
+      );
       const created = await pool.query<{ id: string }>(
         `SELECT app_create_tenant_with_owner($1, $2, $3, 'Asia/Colombo') AS id`,
         [SLUG, "Demo Institute", OWNER],

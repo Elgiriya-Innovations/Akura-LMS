@@ -7,24 +7,24 @@ Tenant workspaces live at `/i/{slug}`. Every institute gets every feature; plans
 ## Stack
 
 - Next.js App Router + TypeScript
-- Supabase Postgres + Drizzle ORM (`pg` driver)
-- Supabase Auth (`@supabase/ssr`)
+- Neon Postgres + Drizzle ORM (`pg` driver)
+- Better Auth (self-hosted; identities in Neon `auth_*` tables, `__Host-akura.*` cookies)
 - Tailwind CSS
-- Supabase Storage for course files
+- Supabase Storage for course files (storage only)
 - Resend + React Email
 - PayHere recurring billing
 
 ## Prerequisites
 
 - Node.js 20+
-- Supabase project (Postgres + Auth + Storage)
-- Database connection string (direct or session pooler that supports `SET LOCAL` in a transaction)
+- Neon project: pooled connection string (`DATABASE_URL`) and direct one (`DATABASE_URL_UNPOOLED`)
+- Supabase project used **only** for Storage (private bucket `akura-uploads`)
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# Fill DATABASE_URL, NEXT_PUBLIC_SUPABASE_*, SUPABASE_SERVICE_ROLE_KEY, etc.
+# Fill DATABASE_URL*, BETTER_AUTH_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc.
 
 npm install
 npm run db:migrate
@@ -34,7 +34,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-For local signup without email confirmation, disable **Confirm email** in Supabase Auth → Providers → Email.
+Sign-up requires email verification. Without Resend configured, the verification link is printed to the server console. For local work you can set `AUTH_SKIP_EMAIL_VERIFICATION="true"` (ignored in production).
 
 ## Ops
 

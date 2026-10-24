@@ -14,7 +14,7 @@ export type Tx = PgTransaction<
 /**
  * The only allowed path for tenant-owned data.
  * Assumes akura_app (NOBYPASSRLS) then sets transaction-local GUCs so RLS
- * applies under PgBouncer/Supabase transaction pooling.
+ * applies under PgBouncer (Neon pooled endpoint) transaction pooling.
  */
 export async function withTenant<T>(
   ctx: { tenantId: string; userId: string },

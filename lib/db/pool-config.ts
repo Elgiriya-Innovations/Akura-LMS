@@ -1,17 +1,20 @@
 import type { PoolConfig } from "pg";
 
-/** Supabase often needs TLS with rejectUnauthorized:false in Node. */
+/**
+ * Neon Postgres. Requests use the pooled (`-pooler`) endpoint, which is
+ * PgBouncer in transaction mode — hence SET LOCAL inside withTenant().
+ * Neon serves publicly trusted certificates, so TLS is verified.
+ * DATABASE_SSL=false is for local Postgres / CI only.
+ */
 export function pgPoolConfig(connectionString: string): PoolConfig {
   const url = connectionString
-    .replace(/[?&]sslmode=[^&]*/g, "")
+    .replace(/[?&](sslmode|channel_binding)=[^&]*/g, "")
     .replace(/\?$/, "")
     .replace(/\?&/, "?");
   return {
     connectionString: url,
-    ssl:
-      process.env.DATABASE_SSL === "false"
-        ? false
-        : { rejectUnauthorized: false },
-    max: 10,
+    ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: true },
+    // Small per-instance pool: many serverless instances share Neon's pooler.
+    max: Number(process.env.DATABASE_POOL_MAX ?? 5),
   };
 }

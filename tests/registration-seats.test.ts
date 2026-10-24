@@ -11,7 +11,7 @@ import {
 import { getUsageSnapshot, QuotaError } from "../lib/billing/quota";
 import { studentApplications } from "../lib/db/schema";
 import { createTestPool } from "./helpers/db-pool";
-import { createTestTenant } from "./helpers/test-tenant";
+import { createTestAuthUser, createTestTenant } from "./helpers/test-tenant";
 
 const pool = createTestPool();
 let tenantId = "";
@@ -71,7 +71,7 @@ describe("Phase 4 registration & seats", () => {
       [token],
     );
     const linkId = link.rows[0]!.id;
-    const authUser = `applicant-${randomUUID()}`;
+    const authUser = await createTestAuthUser(pool, `applicant-${randomUUID()}`);
 
     const app = await pool.query<{ app_submit_student_application: string }>(
       `SELECT app_submit_student_application(

@@ -24,7 +24,7 @@ export async function GET(
     return NextResponse.json(
       {
         error:
-          "Storage is not configured. Set SUPABASE_SERVICE_ROLE_KEY (and create the storage bucket).",
+          "Storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (and create the storage bucket).",
       },
       { status: 503 },
     );

@@ -57,6 +57,9 @@ export async function loginAction(
     password: parsed.data.password,
   });
 
+  if (result.error?.code === "EMAIL_NOT_VERIFIED") {
+    return { error: "Confirm your email first — we sent you a link when you signed up." };
+  }
   if (result.error) {
     return { error: "Sign in failed. Check your email and password." };
   }

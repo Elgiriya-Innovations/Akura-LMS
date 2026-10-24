@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/auth/middleware";
+import { sessionCookieName } from "@/lib/auth/cookies";
 
 function isPublic(pathname: string) {
   return (
@@ -11,7 +11,6 @@ function isPublic(pathname: string) {
     pathname.startsWith("/pending-approval") ||
     pathname.startsWith("/join/") ||
     pathname.startsWith("/r/") ||
-    pathname.startsWith("/auth/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/qr") ||
     pathname.startsWith("/api/health") ||
@@ -28,9 +27,11 @@ export default async function middleware(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
-  const { response, user } = await updateSession(req);
+  // Optimistic gate only: the cookie's signature and expiry are verified by
+  // getSessionUser() (Better Auth) inside requireRole() on every request.
+  const hasSession = req.cookies.has(sessionCookieName);
 
-  if (!isPublic(pathname) && !user) {
+  if (!isPublic(pathname) && !hasSession) {
     const login = new URL("/login", req.url);
     login.searchParams.set("next", pathname);
     return NextResponse.redirect(login);
@@ -42,15 +43,9 @@ export default async function middleware(req: NextRequest) {
     requestHeaders.set("x-akura-tenant-slug", decodeURIComponent(match[1]));
   }
 
-  const next = NextResponse.next({
+  return NextResponse.next({
     request: { headers: requestHeaders },
   });
-
-  response.cookies.getAll().forEach((c) => {
-    next.cookies.set(c);
-  });
-
-  return next;
 }
 
 export const config = {

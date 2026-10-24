@@ -6,7 +6,7 @@ import { sql } from "drizzle-orm";
 import * as schema from "../lib/db/schema";
 import { auditLog, events, memberships } from "../lib/db/schema";
 import { createTestPool } from "./helpers/db-pool";
-import { createTestTenant } from "./helpers/test-tenant";
+import { createTestAuthUser, createTestTenant } from "./helpers/test-tenant";
 
 const pool = createTestPool();
 const db = drizzle(pool, { schema });
@@ -40,6 +40,8 @@ describe("RLS tenant isolation", () => {
     const b = await createTestTenant(pool);
     tenantA = a.tenantId;
     tenantB = b.tenantId;
+    await createTestAuthUser(pool, userA);
+    await createTestAuthUser(pool, userB);
 
     await withTenantLocal({ tenantId: tenantA, userId: userA }, async (tx) => {
       await tx.insert(memberships).values({

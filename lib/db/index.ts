@@ -16,7 +16,8 @@ function getConnectionString() {
   return connectionString;
 }
 
-function getPool() {
+/** Shared pg pool — also used by Better Auth for the auth_* tables. */
+export function getPool() {
   if (!globalForDb.akuraPool) {
     globalForDb.akuraPool = new Pool(pgPoolConfig(getConnectionString()));
   }

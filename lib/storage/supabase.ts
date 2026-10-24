@@ -22,10 +22,16 @@ function bucketName() {
   return process.env.SUPABASE_STORAGE_BUCKET ?? "akura-uploads";
 }
 
+/** Storage-only Supabase project; auth and tables live in Neon. */
+function supabaseUrl() {
+  // NEXT_PUBLIC_ fallback keeps older deployments working; nothing client-side needs it.
+  return process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+}
+
 /** Service-role client for server-side upload/signed URL after app authz. */
 function getAdminClient(): SupabaseClient {
   return createClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseUrl() ?? requireEnv("SUPABASE_URL"),
     requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
     {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -80,7 +86,6 @@ export async function signedDownloadUrl(opts: {
 
 export function isStorageConfigured(): boolean {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseUrl() && process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }

@@ -11,7 +11,7 @@ import {
 } from "../lib/tenant/ownership";
 import { withTenant } from "../lib/db/tenant";
 import { createTestPool } from "./helpers/db-pool";
-import { createTestTenant } from "./helpers/test-tenant";
+import { createTestAuthUser, createTestTenant } from "./helpers/test-tenant";
 
 const pool = createTestPool();
 let tenantId = "";
@@ -27,6 +27,8 @@ describe("Phase 2 roles & ownership", () => {
     const t = await createTestTenant(pool);
     tenantId = t.tenantId;
     ownerUser = t.ownerUserId;
+    await createTestAuthUser(pool, adminUser);
+    await createTestAuthUser(pool, teacherUser);
 
     await withTenant({ tenantId, userId: ownerUser }, async (tx) => {
       const [admin] = await tx
